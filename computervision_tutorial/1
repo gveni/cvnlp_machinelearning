@@ -1,0 +1,12 @@
+# display image properties
+from PIL import Image
+
+# load image
+image_path = '~/Documents/data/cv_data/sydney_bridege.png' 
+image = Image.open(image_path)
+# extract image properties
+print(image.format)
+print(image.mode)
+print(imge.size)
+# display image
+image.show()
