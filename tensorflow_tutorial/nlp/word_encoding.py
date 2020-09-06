@@ -11,7 +11,7 @@ sentences = [
 
 tokenizer = Tokenizer(num_words=100, oov_token='<OOV>')  # create Tokenizer instance
 tokenizer.fit_on_texts(sentences)  # encode data
-word_index = tokenizer.word_index  # returns dictoary containing key value pairs (key=word, value=token)
+word_index = tokenizer.word_index  # returns dictonary containing key value pairs (key=word, value=token)
 print(word_index)
 # convert sentences into sequences, which is list of lists (outer list: #(sentences), inner list:
 # tokens for each word in sentence) 
