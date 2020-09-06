@@ -109,7 +109,7 @@ def evaluate_model(test_dl, model):
         yhat = argmax(yhat, axis=1)
         # extract numpy arrays for targets
         y = targets.numpy()
-        # reshape numpy arrays to 1D
+        # reshape numpy arrays to 1D matrix
         yhat = yhat.reshape((len(yhat),1))
         y = y.reshape((len(y),1))
         predictions.append(yhat)
