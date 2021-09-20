@@ -1,6 +1,7 @@
 import os
 import shutil
 import re
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,7 +13,7 @@ from torchvision import datasets, models, transforms
 import time
 import copy
 
-parent_dir = '/Users/gveni/Documents/Projects/UGC_PhotoMagic/Data/dogs-vs-cats/'
+parent_dir = '/users/gveni/documents/projects/ugc_photomagic/data/dogs-vs-cats/'
 
 files = os.listdir(parent_dir + 'train/')
 
@@ -31,10 +32,10 @@ def train_maker(name):
 # try:
 #     os.makedirs(parent_dir+"val/cat")
 #     os.makedirs(parent_dir+"val/dog")
-# except OSError:
-#     print("Creating directory failed")
+# except oserror:
+#     print("creating directory failed")
 # else:
-#     print("Directory successfully created")
+#     print("directory successfully created")
 
 cat_train = parent_dir + "train/cat"
 cat_val = parent_dir + "val/cat"
@@ -44,15 +45,15 @@ dog_val = parent_dir + "val/dog"
 cat_files = os.listdir(cat_train)
 dog_files = os.listdir(dog_train)
 
-# Put 1000 images from class-specific training folders to the respective validation folders
+# put 1000 images from class-specific training folders to the respective validation folders
 # for f in cat_files:
-#     validCatSearchObj = re.search("5\d\d\d", f)
-#     if validCatSearchObj:
+#     validcatsearchobj = re.search("5\d\d\d", f)
+#     if validcatsearchobj:
 #         shutil.move(f'{cat_train}/{f}', cat_val)
 #
 # for f in dog_files:
-#     validDogSearchObj = re.search("5\d\d\d", f)
-#     if validDogSearchObj:
+#     validdogsearchobj = re.search("5\d\d\d", f)
+#     if validdogsearchobj:
 #         shutil.move(f'{dog_train}/{f}', dog_val)
 
 
@@ -78,14 +79,14 @@ chosen_datasets = {x: datasets.ImageFolder(os.path.join(parent_dir, x), image_tr
                    for x in ['train', 'val']}
 
 # prepare dataloaders for training and validation
-dataloaders = {x: DataLoader(chosen_datasets[x], batch_size=4, shuffle=4, num_workers=4)
+dataloaders = {x: DataLoader(chosen_datasets[x], batch_size=4, shuffle=True, num_workers=4)
                for x in ['train', 'val']}
 
-# Get the dataset sizes and class names for train and validation datasets
+# get the dataset sizes and class names for train and validation datasets
 dataset_sizes = {x: len(chosen_datasets[x]) for x in ['train', 'val']}
 class_names = chosen_datasets['train'].classes
 
-# Specify to use "GPU" if available else 'CPU'
+# specify to use "gpu" if available else 'cpu'
 device = torch.device("cuda" if torch.cuda.is_available() else 'cpu')
 
 # visualize some images
@@ -98,18 +99,18 @@ def imshow(inp, title=None):
     plt.imshow(inp)
     if title is not None:
         plt.title(title)
-    plt.pause(.5)  # Pause a bit so that plots are updated
+    plt.pause(.5)  # pause a bit so that plots are updated
 
-# Grab some of the training data to visualize
+# grab some of the training data to visualize
 inputs, classes = next(iter(dataloaders['train']))
 
-# Now we construct a grid from batch
+# now we construct a grid from batch
 out = torchvision.utils.make_grid(inputs)
 
 imshow(out, title=[class_names[x] for x in classes])
 
 ##########################
-# Setting up pre-trained model
+# setting up pre-trained model
 ##########################
 
 resnet_model = models.resnet18(pretrained=True)
@@ -134,49 +135,87 @@ def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=10):
     best_acc = 0.0
 
     for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs-1))
+        print('epoch {}/{}'.format(epoch, num_epochs-1))
 
-        for phase in ['train', 'valid']:
+        for phase in ['train', 'val']:
             if phase == 'train':
                 scheduler.step()
                 model.train()
             else:
                 model.eval()
 
-        current_loss = 0.0
-        current_acc = 0.0
+            current_loss = 0.0
+            current_acc = 0.0
 
-        for inputs, targets in dataloaders[phase]:
-            inputs = inputs.to(device)
-            targets = targets.to(device)
+            # Here's where training starts
+            print("Iterating through data...")
 
-            # void gradients
-            optimizer.zero_grad()
+            for inputs, targets in dataloaders[phase]:
+                inputs = inputs.to(device)
+                targets = targets.to(device)
 
-            with torch.set_grad_enabled(phase == 'train'):
-                yhats = model(inputs)
-                predictions = np.argmax(yhats, axis=1)
-                loss = loss_criterion(yhats, targets)
+                # void gradients
+                optimizer.zero_grad()
 
-                if phase == 'train':
-                    loss.backward()
-                    optimizer.step()
+                with torch.set_grad_enabled(phase == 'train'):
+                    yhats = model(inputs)
+                    _, preds = torch.max(yhats, axis=1)
+                    loss = loss_criterion(yhats, targets)
+
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+
+                current_loss += loss.item() * inputs.size(0)
+                current_acc += torch.sum(preds == targets.data)
 
             epoch_loss = current_loss / dataset_sizes[phase]
             epoch_acc = current_acc.double() / dataset_sizes[phase]
 
-            print('{} Loss: {:.3f}. Accuracy: {:.3f}'.format(phase, epoch_loss, epoch_acc))
+            print('{} loss: {:.3f}. accuracy: {:.3f}'.format(phase, epoch_loss, epoch_acc))
 
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wgts = copy.deepcopy(model.state_dict())
+
         print()
 
     total_time = time.time() - st
-    print('Training complete in {:.0f}m {:.0f}s'.format(
-        total_time // 60, total_time % 60))
-    print('Best val Acc: {:3f}'.format(best_acc))
+    print('Training complete in {:.0f}m {:.0f}s'.format(total_time // 60, total_time % 60))
+    print('Best val acc: {:3f}'.format(best_acc))
 
-    # Now we'll load in the best model weights and return it
+    # now we'll load in the best model weights and return it
     model.load_state_dict(best_model_wgts)
     return model
+
+
+def visualize_model(model, num_images=6):
+    was_training = model.training
+    model.eval()
+    images_handeled = 0
+    fig = plt.figure()
+
+    with torch.no_grad():
+        for i, (inputs, labels) in enumerate(dataloaders['val']):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+
+            for j in range(inputs.size()[0]):
+                images_handeled += 1
+                ax = plt.subplot(num_images//2, 2, images_handeled)
+                ax.axis('off')
+                ax.set_title('predicted: {}'.format(class_names[preds[j]]))
+                imshow(inputs.cpu().data[j])
+
+                if images_handeled == num_images:
+                    model.train(mode=was_training)
+                    return
+        model.train(mode=was_training)
+
+
+base_model = train_model(resnet_model, loss_criterion, optimizer, lr_scheduler, num_epochs=3)
+visualize_model(base_model)
+plt.show()
