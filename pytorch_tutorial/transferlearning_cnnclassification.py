@@ -13,7 +13,7 @@ from torchvision import datasets, models, transforms
 import time
 import copy
 
-parent_dir = '/users/gveni/documents/projects/ugc_photomagic/data/dogs-vs-cats/'
+parent_dir = '/home/ec2-user/ebs_xvdg/data/UGC_PhotoMagic/data/dogs-vs-cats/'
 
 files = os.listdir(parent_dir + 'train/')
 
