@@ -15,7 +15,7 @@ random.seed(randomseed)
 torch.manual_seed(randomseed)
 
 # define inputs for DCGAN model
-dataroot = "/Users/gveni/Documents/Projects/UGC_PhotoMagic/Miscelleanous_Data/celeba"  # root data dir
+dataroot = "/home/ec2-user/ebs_xvdg/data/UGC_PhotoMagic/Miscelleanous_Data/celeba"  # root data dir
 workers = 2  # number of workers for dataloader
 batch_size = 128  # training batch size
 image_size = 64  # default image size for training images

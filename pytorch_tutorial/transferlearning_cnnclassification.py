@@ -7,13 +7,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
-from torch.optim import Adam, lr_scheduler
+from torch.optim import SGD, Adam, lr_scheduler
 import torchvision
 from torchvision import datasets, models, transforms
 import time
 import copy
 
-parent_dir = '/home/ec2-user/ebs_xvdg/data/UGC_PhotoMagic/data/dogs-vs-cats/'
+parent_dir = '/home/ec2-user/ebs_xvdg/data/Miscelleanous_Data/dogs-vs-cats/'
 
 files = os.listdir(parent_dir + 'train/')
 
@@ -107,7 +107,7 @@ inputs, classes = next(iter(dataloaders['train']))
 # now we construct a grid from batch
 out = torchvision.utils.make_grid(inputs)
 
-imshow(out, title=[class_names[x] for x in classes])
+#imshow(out, title=[class_names[x] for x in classes])
 
 ##########################
 # setting up pre-trained model
@@ -123,7 +123,7 @@ resnet_model.fc = torch.nn.Linear(num_features, 2)
 # define loss function, optimizer and learning rate scheduler to prevent from over-shooting/non-convergence
 resnet_model = resnet_model.to(device)
 loss_criterion = torch.nn.CrossEntropyLoss()
-optimizer = Adam(resnet_model.parameters(), lr=0.001)
+optimizer = SGD(resnet_model.parameters(), lr=0.001, momentum=0.9)
 # decay lr by a factor of 0.1 after every 7 epochs
 lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
@@ -139,7 +139,6 @@ def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=10):
 
         for phase in ['train', 'val']:
             if phase == 'train':
-                scheduler.step()
                 model.train()
             else:
                 model.eval()
@@ -169,10 +168,13 @@ def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=10):
                 current_loss += loss.item() * inputs.size(0)
                 current_acc += torch.sum(preds == targets.data)
 
+            if phase == 'train':
+                scheduler.step()
+
             epoch_loss = current_loss / dataset_sizes[phase]
             epoch_acc = current_acc.double() / dataset_sizes[phase]
 
-            print('{} loss: {:.3f}. accuracy: {:.3f}'.format(phase, epoch_loss, epoch_acc))
+            print('{} loss: {:.4f}. accuracy: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
@@ -182,7 +184,7 @@ def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=10):
 
     total_time = time.time() - st
     print('Training complete in {:.0f}m {:.0f}s'.format(total_time // 60, total_time % 60))
-    print('Best val acc: {:3f}'.format(best_acc))
+    print('Best val acc: {:4f}'.format(best_acc))
 
     # now we'll load in the best model weights and return it
     model.load_state_dict(best_model_wgts)
@@ -216,6 +218,6 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 
-base_model = train_model(resnet_model, loss_criterion, optimizer, lr_scheduler, num_epochs=3)
-visualize_model(base_model)
-plt.show()
+base_model = train_model(resnet_model, loss_criterion, optimizer, lr_scheduler, num_epochs=10)
+#visualize_model(base_model)
+#plt.show()
