@@ -13,7 +13,7 @@ from torchvision import datasets, models, transforms
 import time
 import copy
 
-parent_dir = '/home/ec2-user/ebs_xvdg/data/Miscelleanous_Data/dogs-vs-cats/'
+parent_dir = '/home/ec2-user/ebs_xvdg/data/UGC_PhotoMagic/UGCTraining70K/'
 
 files = os.listdir(parent_dir + 'train/')
 
@@ -26,35 +26,38 @@ def train_maker(name):
         if search_obj:
             shutil.move(os.path.join(parent_dir, 'train', f), train_dir)
 
-#train_maker('cat')
-#train_maker('dog')
+#train_maker('cfw')
+#train_maker('ppc')
 
 # try:
-#     os.makedirs(parent_dir+"val/cat")
-#     os.makedirs(parent_dir+"val/dog")
+#     os.makedirs(parent_dir+"val/cfw")
+#     os.makedirs(parent_dir+"val/ppc")
 # except oserror:
 #     print("creating directory failed")
 # else:
 #     print("directory successfully created")
 
-cat_train = parent_dir + "train/cat"
-cat_val = parent_dir + "val/cat"
-dog_train = parent_dir + "train/dog"
-dog_val = parent_dir + "val/dog"
-
-cat_files = os.listdir(cat_train)
-dog_files = os.listdir(dog_train)
+#cfw_train = parent_dir + "train/clipart_flag-wave"
+#cfw_val = parent_dir + "val/clipart_flag-wave"
+#ppc_train = parent_dir + "train/person_photo_candid"
+#ppc_val = parent_dir + "val/person_photo_candid"
+#tlg_train = parent_dir + "train/tombstone_legibility-good"
+#tlg_val = parent_dir + "val/tombstone_legibility-good"
+#
+#cfw_files = os.listdir(cfw_train)
+#ppc_files = os.listdir(ppc_train)
+#tlg_files = os.listdir(tlg_train)
 
 # put 1000 images from class-specific training folders to the respective validation folders
-# for f in cat_files:
-#     validcatsearchobj = re.search("5\d\d\d", f)
-#     if validcatsearchobj:
-#         shutil.move(f'{cat_train}/{f}', cat_val)
+# for f in cfw_files:
+#     validcfwsearchobj = re.search("5\d\d\d", f)
+#     if validcfwsearchobj:
+#         shutil.move(f'{cfw_train}/{f}', cfw_val)
 #
-# for f in dog_files:
-#     validdogsearchobj = re.search("5\d\d\d", f)
-#     if validdogsearchobj:
-#         shutil.move(f'{dog_train}/{f}', dog_val)
+# for f in ppc_files:
+#     validppcsearchobj = re.search("5\d\d\d", f)
+#     if validppcsearchobj:
+#         shutil.move(f'{ppc_train}/{f}', ppc_val)
 
 
 # data augmentation using transforms
@@ -75,11 +78,23 @@ image_transforms = {'train': transforms.Compose([
 ]),
 }
 
+# Training model parameters
+batch_sz = 4
+num_classes = 3
+workers = 1
+lr = 0.001
+momentum = 0.9
+step_sz = 7
+gamma = 0.1
+epochs = 10
+
 chosen_datasets = {x: datasets.ImageFolder(os.path.join(parent_dir, x), image_transforms[x])
                    for x in ['train', 'val']}
+print("chosen datasets", chosen_datasets)
+
 
 # prepare dataloaders for training and validation
-dataloaders = {x: DataLoader(chosen_datasets[x], batch_size=4, shuffle=True, num_workers=4)
+dataloaders = {x: DataLoader(chosen_datasets[x], batch_size=batch_sz, shuffle=True, num_workers=workers)
                for x in ['train', 'val']}
 
 # get the dataset sizes and class names for train and validation datasets
@@ -102,10 +117,10 @@ def imshow(inp, title=None):
     plt.pause(.5)  # pause a bit so that plots are updated
 
 # grab some of the training data to visualize
-inputs, classes = next(iter(dataloaders['train']))
+#inputs, classes = next(iter(dataloaders['train']))
 
 # now we construct a grid from batch
-out = torchvision.utils.make_grid(inputs)
+#out = torchvision.utils.make_grid(inputs)
 
 #imshow(out, title=[class_names[x] for x in classes])
 
@@ -115,7 +130,7 @@ out = torchvision.utils.make_grid(inputs)
 
 resnet_model = models.resnet18(pretrained=True)
 num_features = resnet_model.fc.in_features
-resnet_model.fc = torch.nn.Linear(num_features, 2)
+resnet_model.fc = torch.nn.Linear(num_features, num_classes)
 
 #for name, child in resnet_model.named_children():
 #    print(name)
@@ -123,12 +138,12 @@ resnet_model.fc = torch.nn.Linear(num_features, 2)
 # define loss function, optimizer and learning rate scheduler to prevent from over-shooting/non-convergence
 resnet_model = resnet_model.to(device)
 loss_criterion = torch.nn.CrossEntropyLoss()
-optimizer = SGD(resnet_model.parameters(), lr=0.001, momentum=0.9)
+optimizer = SGD(resnet_model.parameters(), lr=lr, momentum=momentum)
 # decay lr by a factor of 0.1 after every 7 epochs
-lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=step_sz, gamma=gamma)
 
 # train the model
-def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=10):
+def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=epochs):
     st = time.time()
     # set initial models weights from the pretrained model through state_dict
     best_model_wgts = copy.deepcopy(model.state_dict())
@@ -145,10 +160,6 @@ def train_model(model, loss_criterion, optimizer, scheduler, num_epochs=10):
 
             current_loss = 0.0
             current_acc = 0.0
-
-            # Here's where training starts
-            print("Iterating through data...")
-
             for inputs, targets in dataloaders[phase]:
                 inputs = inputs.to(device)
                 targets = targets.to(device)
@@ -218,6 +229,6 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 
-base_model = train_model(resnet_model, loss_criterion, optimizer, lr_scheduler, num_epochs=10)
+base_model = train_model(resnet_model, loss_criterion, optimizer, lr_scheduler, num_epochs=epochs)
 #visualize_model(base_model)
 #plt.show()
