@@ -26,38 +26,35 @@ def train_maker(name):
         if search_obj:
             shutil.move(os.path.join(parent_dir, 'train', f), train_dir)
 
-#train_maker('cfw')
-#train_maker('ppc')
+#train_maker('cat')
+#train_maker('dog')
 
 # try:
-#     os.makedirs(parent_dir+"val/cfw")
-#     os.makedirs(parent_dir+"val/ppc")
+#     os.makedirs(parent_dir+"val/cat")
+#     os.makedirs(parent_dir+"val/dog")
 # except oserror:
 #     print("creating directory failed")
 # else:
 #     print("directory successfully created")
 
-#cfw_train = parent_dir + "train/clipart_flag-wave"
-#cfw_val = parent_dir + "val/clipart_flag-wave"
-#ppc_train = parent_dir + "train/person_photo_candid"
-#ppc_val = parent_dir + "val/person_photo_candid"
-#tlg_train = parent_dir + "train/tombstone_legibility-good"
-#tlg_val = parent_dir + "val/tombstone_legibility-good"
-#
-#cfw_files = os.listdir(cfw_train)
-#ppc_files = os.listdir(ppc_train)
-#tlg_files = os.listdir(tlg_train)
+#cat_train = parent_dir + "train/clipart_flag-wave"
+#cat_val = parent_dir + "val/clipart_flag-wave"
+#dog_train = parent_dir + "train/person_photo_candid"
+#dog_val = parent_dir + "val/person_photo_candid"
+
+#cat_files = os.listdir(cat_train)
+#dog_files = os.listdir(dog_train)
 
 # put 1000 images from class-specific training folders to the respective validation folders
-# for f in cfw_files:
-#     validcfwsearchobj = re.search("5\d\d\d", f)
-#     if validcfwsearchobj:
-#         shutil.move(f'{cfw_train}/{f}', cfw_val)
+# for f in cat_files:
+#     validcatsearchobj = re.search("5\d\d\d", f)
+#     if validcatsearchobj:
+#         shutil.move(f'{cat_train}/{f}', cat_val)
 #
-# for f in ppc_files:
-#     validppcsearchobj = re.search("5\d\d\d", f)
-#     if validppcsearchobj:
-#         shutil.move(f'{ppc_train}/{f}', ppc_val)
+# for f in dog_files:
+#     validdogsearchobj = re.search("5\d\d\d", f)
+#     if validdogsearchobj:
+#         shutil.move(f'{dog_train}/{f}', dog_val)
 
 
 # data augmentation using transforms
@@ -80,7 +77,7 @@ image_transforms = {'train': transforms.Compose([
 
 # Training model parameters
 batch_sz = 4
-num_classes = 3
+num_classes = 2
 workers = 1
 lr = 0.001
 momentum = 0.9
