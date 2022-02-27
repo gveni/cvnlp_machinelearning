@@ -17,7 +17,7 @@ random.seed(randomseed)
 torch.manual_seed(randomseed)
 
 # define inputs for DCGAN model
-dataroot = "/home/ec2-user/ebs_xvdg/data/UGC_PhotoMagic/Miscelleanous_Data/celeba"  # root data dir
+dataroot = "/home/ec2-user/ebs_xvdg/data/Miscelleanous_Data/celeba"  # root data dir
 workers = 2  # number of workers for dataloader
 batch_size = 128  # training batch size
 image_size = 64  # default image size for training images
@@ -156,7 +156,8 @@ for epoch in range(num_epochs):
         batch_sz = real_batch.size(0)
         label = torch.full((batch_sz,), real_label, dtype=torch.float, device=device)
         # forward pass real example batch through discriminator
-        output = netD(real_batch)
+        output_tmp = netD(real_batch)
+        output = netD(real_batch).view(-1)
         # calculate discriminator loss
         lossD_real = loss_criteria(output, label)
         # backpropagate loss to compute gradients
@@ -170,7 +171,7 @@ for epoch in range(num_epochs):
         fake_batch = netG(noise)
         label.fill_(fake_label)
         # forward pass fake batch through discriminator
-        output = netD(fake_batch)
+        output = netD(fake_batch.detach()).view(-1)
         # calculate discriminator loss
         lossD_fake = loss_criteria(output, label)
         # backpropagate loss
@@ -185,7 +186,7 @@ for epoch in range(num_epochs):
         netG.zero_grad()
         label.fill_(real_label)  # fake labels are real for generator cost
         # Since D is updated,
-        output = netD(fake_batch)
+        output = netD(fake_batch).view(-1)
         # Calculate G's loss based on this output
         loss_G = loss_criteria(output, label)
         # backpropagate loss
@@ -196,7 +197,7 @@ for epoch in range(num_epochs):
 
         if i % 50 == 0:
             print("[%d/%d][%d/%d]\tLoss_D: %.3f\tLoss_G: %.3f\tD_x: %.3f\tD_G_z1: %.3f\t D_G_z2: %.3f)"
-                  % (epoch, num_epochs, i, len(dataloader), loss_D.item(), loss_G.ite(), D_x, D_G_z1, D_G_z2))
+                  % (epoch, num_epochs, i, len(dataloader), loss_D.item(), loss_G.item(), D_x, D_G_z1, D_G_z2))
 
         # save losses progress
         lossG_progress.append(loss_G.item())
