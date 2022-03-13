@@ -1,6 +1,7 @@
+import os
 import torch
 import torch.nn as nn
-import torch.functional as F
+import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import matplotlib.pyplot as plt
@@ -49,7 +50,7 @@ class STN(nn.Module):
     # Combine localization and regression networks to build STN
     def stn(self, x):
         x_stn = self.stn_localization(x)
-        x_stn = x_stn.view(-1, x_stn.size(1)*x_stn.size(2)*x_stn(3))
+        x_stn = x_stn.view(-1, x_stn.size(1)*x_stn.size(2)*x_stn.size(3))
         # calculate theta parameters
         theta = self.stn_regression(x_stn)
         # reshape theta
@@ -77,8 +78,11 @@ class STN(nn.Module):
 data_path = '~/.torch/datasets/cifar'
 workers = 1
 lr = 0.001
-batch_size = 32
-epochs = 10
+batch_size = 64
+epochs = 50
+model_dir = '/home/ec2-user/Code/cvnlp_machinelearning/pytorch_tutorial/models'
+os.makedirs(model_dir, exist_ok=True)
+model_file = 'stn_cifar.pth'
 
 # image transforms
 means = [0.485, 0.456, 0.406]
@@ -116,8 +120,8 @@ dataset_sizes = {x: len(datasets[x]) for x in ['train', 'val']}
 class_names = datasets['train'].classes
 
 # initialize the model, optimizer, loss_function
-stn_model = nn.Module.STN().to(device)
-optimizer = optim.SGD(stn_model, lr=lr)
+stn_model = STN().to(device)
+optimizer = optim.SGD(stn_model.parameters(), lr=lr)
 loss_criteria = nn.CrossEntropyLoss()
 
 # train STN model
@@ -142,7 +146,7 @@ def train_model(stn_model, optimizer, loss_criteria, num_epochs=epochs):
                 targets = targets.to(device)
                 optimizer.zero_grad()  # void gradients
 
-                with torch.set_grad_enabled(phase='train'):
+                with torch.set_grad_enabled(phase=='train'):
                     yhats = stn_model(inputs)
                     _, preds = torch.max(yhats.data, axis=1)
                     loss = loss_criteria(yhats, targets)
@@ -166,11 +170,43 @@ def train_model(stn_model, optimizer, loss_criteria, num_epochs=epochs):
         print()
 
     total_time = time.time() - st
-    print('Training complete in {:.0f}minu {.0f}sec'.format(total_time // 60, total_time % 60))
-    print('Best validation accuracy {.3f}'.format(best_acc))
+    print('Training complete in {:.0f}minu {:.0f}sec'.format(total_time // 60, total_time % 60))
+    print('Best validation accuracy {:3f}'.format(best_acc))
 
     # now load the best model weights for saving the model
     stn_model.load_state_dict(best_model_weights)
+    torch.save(stn_model, os.path.join(model_dir, model_file))
     return stn_model
 
+
+def tensor2numpy(inp):
+    inp = inp.numpy().transform((1,2,0))
+    inp = std*inp + mean
+    return inp
+
+
+def visualize_stn():
+    stn_model = torch.load(os.path.join(model_dir, model_file))
+    with torch.no_grad():
+        data = next(iter(dataloaders['val']))[0].to(device)
+
+        input_tensor = data.cpu()
+        transformed_tensor = stn_model.stn(data).cpu()
+
+        ip_grid = tensor2numpy(torchvision.utils.make_grid(input_tensor))
+        op_grid = tensor2numpy(torchvision.utils.make_grid(transformed_tensor))
+
+        # plot side-by-side results for comparison
+        f, axarr = plt.subplots(1, 2)
+        axarr[0].imshow(ip_grid)
+        axarr[0].set_title('input images')
+        
+        axarr[1].imshow(op_grid)
+        axarr[1].set_title('transformed images')
+
+
+
 trained_stn_model = train_model(stn_model, optimizer, loss_criteria, epochs)
+#visualize_stn()
+#plt.ioff()
+#plt.show()
