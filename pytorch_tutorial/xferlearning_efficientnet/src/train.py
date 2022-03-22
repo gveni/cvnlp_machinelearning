@@ -1,7 +1,7 @@
 import argparse
 import time
 import torch
-from torch.optim import SGD, lr_scheduler
+from torch.optim import SGD, Adam, lr_scheduler
 
 from tqdm.auto import tqdm
 
@@ -32,14 +32,14 @@ def train(model, trainloader, optimizer, scheduler, loss_criteria):
         loss = loss_criteria(outputs, labels)
         train_running_loss += loss.item()
         # calculate accuracy
-        _, preds = torch.max(outputs.data, axis=1)
-        train_running_accuracy += (labels == preds).sum().item()
+        _, preds = torch.max(outputs.data, 1)
+        train_running_accuracy += (preds == labels).sum().item()
         # backpropagate loss
         loss.backward()
         # Update weights
         optimizer.step()
 
-    scheduler.step()
+    #scheduler.step()
 
     # Epoch Loss and accuracy
     epoch_loss = train_running_loss/counter
@@ -53,23 +53,24 @@ def validate(model, validloader, loss_criteria):
     valid_running_loss = 0.0
     valid_running_accuracy = 0
     counter = 0
-    for i, data in tqdm(enumerate(validloader), total=len(validloader.dataset)):
-        counter += 1
-        image, labels = data
-        image = image.to(device)
-        labels = labels.to(device)
-        # forward pass
-        outputs = model(image)
-        # calculate loss
-        loss = loss_criteria(outputs, labels)
-        valid_running_loss += loss.item()
-        # calculate accuracy
-        _, preds = torch.max(outputs.data, axis=1)
-        valid_running_accuracy += (labels == preds).sum().item()
+    with torch.no_grad():
+        for i, data in tqdm(enumerate(validloader), total=len(validloader.dataset)):
+            counter += 1
+            image, labels = data
+            image = image.to(device)
+            labels = labels.to(device)
+            # forward pass
+            outputs = model(image)
+            # calculate loss
+            loss = loss_criteria(outputs, labels)
+            valid_running_loss += loss.item()
+            # calculate accuracy
+            _, preds = torch.max(outputs.data, axis=1)
+            valid_running_accuracy += (preds == labels).sum().item()
 
     # Epoch Loss and accuracy
     epoch_loss = valid_running_loss / counter
-    epoch_acc = 100. * (valid_running_accuracy / len(validloader))
+    epoch_acc = 100. * (valid_running_accuracy / len(validloader.dataset))
     return epoch_loss, epoch_acc
 
 
@@ -94,8 +95,7 @@ if __name__ == "__main__":
     # Learning parameters
     lr = args['learning_rate']
     epochs = args['epochs']
-    #device = ('cuda' if torch.cuda.is_available() else 'cpu')
-    device = 'cpu'
+    device = ('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Computation device: {device}")
     print(f"Learning rate: {lr}")
     print(f"Number of epochs the model is trained for: {epochs}\n")
@@ -105,7 +105,7 @@ if __name__ == "__main__":
                                        num_classes=len(dataset_classes)).to(device)
 
     loss_criterion = torch.nn.CrossEntropyLoss()
-    optimizer = SGD(classification_model.parameters(), lr=lr, momentum=MOMENTUM)
+    optimizer = Adam(classification_model.parameters(), lr=lr)
     # decay lr by a factor of 0.1 after every 7 epochs
     lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 

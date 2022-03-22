@@ -59,7 +59,7 @@ def normalize_transform(pretrained):
             mean=[0.5, 0.5, 0.5],
             std=[0.5, 0.5, 0.5]
         )
-        return normalize
+    return normalize
 
 # Prepare training and validation datasets using above defined transforms
 def get_datasets(pretrained):
@@ -68,8 +68,14 @@ def get_datasets(pretrained):
     :param pretrained: Boolean, True or False.
     :return: training and validation datasets along with class names
     """
-    transformed_dataset = datasets.ImageFolder(ROOT_DIR, transform=get_train_transform(pretrained))
-    transformed_dataset_valid = datasets.ImageFolder(ROOT_DIR, transform=get_valid_transform(pretrained))
+    transformed_dataset = datasets.ImageFolder(
+        ROOT_DIR, 
+        transform=get_train_transform(pretrained)
+    )
+    transformed_dataset_valid = datasets.ImageFolder(
+        ROOT_DIR, 
+        transform=get_valid_transform(pretrained)
+    )
     dataset_size = len(transformed_dataset)
 
     # partition the dataset into training and valid

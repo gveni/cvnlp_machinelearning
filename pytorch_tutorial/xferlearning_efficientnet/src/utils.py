@@ -39,6 +39,7 @@ def save_plots(train_acc, valid_acc, train_loss, valid_loss, pretrained):
     plt.plot(valid_acc, color='blue', linestyle='-', label='validation accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
+    plt.legend()
     plt.savefig(f"../outputs/accuracy_pretrained_{pretrained}.png")
 
     # loss plots
@@ -47,4 +48,5 @@ def save_plots(train_acc, valid_acc, train_loss, valid_loss, pretrained):
     plt.plot(valid_loss, color='red', linestyle='-', label='validation loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
+    plt.legend()
     plt.savefig(f"../outputs/loss_pretrained_{pretrained}.png")

@@ -78,8 +78,8 @@ class STN(nn.Module):
 data_path = '~/.torch/datasets/cifar'
 workers = 1
 lr = 0.001
-batch_size = 64
-epochs = 50
+batch_size = 32 
+epochs = 100
 model_dir = '/home/ec2-user/Code/cvnlp_machinelearning/pytorch_tutorial/models'
 os.makedirs(model_dir, exist_ok=True)
 model_file = 'stn_cifar.pth'
