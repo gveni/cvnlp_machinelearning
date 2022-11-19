@@ -1,0 +1,5 @@
+from transformers import pipeline
+
+classifier = pipeline("sentiment-analysis")
+sentiment = classifier("This code is about exploring various HuggingFace Use-Cases")
+print(sentiment)
