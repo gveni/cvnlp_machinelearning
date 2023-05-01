@@ -43,11 +43,20 @@ def get_trail_zeros_factorial2(num):
         count += num
     return count
 
+def get_k_closest_points(points, k):
+    points.sort(key=lambda p: p[0]*p[0]+p[1]*p[1])
+    return points[:k]
+
 ip_arr = [9, 2, 5, 6, 3, 7, 8]
 # Find missing number in array
 #missing_num = get_missing_num2(ip_arr)
 #print("Missing number is", missing_num)
 # Trailing zeros in factorial
-num = 101
-trail_zeros_factorial = get_trail_zeros_factorial2(num)
-print("Number of training zeros of a factorial", trail_zeros_factorial)
+#num = 101
+#trail_zeros_factorial = get_trail_zeros_factorial2(num)
+#print("Number of training zeros of a factorial", trail_zeros_factorial)
+points = [[3, 3], [5, -1], [-2, 4], [2, -2], [1, -7]]
+k = 4
+k_closest_points = get_k_closest_points(points, k)
+print(k_closest_points)
+

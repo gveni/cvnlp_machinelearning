@@ -21,9 +21,18 @@ def reverseBits(n):
         n = n >> 1
     return rev
 
+def get_num_set_bits(n):
+    print(bin(n))
+    num_set_bits = 0
+    while n > 0:
+        if n & 1 == 1:
+            num_set_bits += 1
+        n >>= 1
+    print(f"Number of set bits in {n} are {num_set_bits}")
+
 
 # Driver code
-ip_num = 11
-print(bin(ip_num))
-print(get_binary_representation(ip_num))
+ip_num = 15
+#print(get_binary_representation(ip_num))
 #print(reverseBits(ip_num))
+get_num_set_bits(ip_num)
