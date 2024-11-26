@@ -1,4 +1,6 @@
-# import the necessary packages
+"""
+Face detection on a live webcam feed using multi-task cascaded convolutional networks (MTCNN)
+"""
 import cv2
 from facenet_pytorch import MTCNN
 
